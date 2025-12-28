@@ -8,6 +8,11 @@ A local Git repository management center implemented in Rust. Create local bare 
 - ⚡ **One-click Setup**: Quickly add local remotes or backup addresses to existing remotes
 - 🔒 **No Root Required**: Uses user-level directories only, no admin permissions needed
 - 🚀 **Rust Implementation**: High-performance, memory-safe Rust implementation
+- 🎨 **Beautiful UI**: Colorful output with enhanced user experience
+- 🔍 **Search & Filter**: Search repositories by name pattern
+- 📊 **Detailed Info**: View repository size, commit count, and modification time
+- ✅ **Safety First**: Confirmation prompts for destructive operations
+- 🛡️ **Input Validation**: Robust validation to prevent errors
 
 ## Installation
 
@@ -57,16 +62,109 @@ This creates a Hub directory at `~/.local-git-hub` (customizable via `--hub-path
 ### 2. Create Backup Repository
 
 ```bash
-local-git-rs create my-project
+local-git-rs create <name>
 ```
 
-This creates a bare repository named `my-project.git` in the Hub.
+Creates a bare repository named `<name>.git` in the Hub.
+
+**Features**:
+- Validates repository name (no invalid characters)
+- Checks for duplicates
+- Prevents reserved names (`.`, `..`)
 
 **Prerequisite**: Hub must be initialized first.
 
-### 3. Add to Current Project
+### 3. List Repositories
 
-There are two ways to add local backup to your project:
+```bash
+# Simple list
+local-git-rs list
+
+# Detailed list with size, commits, and modification time
+local-git-rs list --detailed
+```
+
+**Output Examples**:
+
+Simple list:
+```
+Repositories in Hub
+═══════════════════════════════════════════════════════════════════════════════
+  my-project.git
+  another-project.git
+
+Total: 2 repositories
+```
+
+Detailed list:
+```
+Repositories in Hub
+═══════════════════════════════════════════════════════════════════════════════
+Name                           Size      Commits            Modified
+──────────────────────────────────────────────────────────────────────────────────
+my-project.git                 1.2 MB          42    2025-12-27 15:30:45
+another-project.git           256 KB           8    2025-12-26 10:15:20
+
+Total: 2 repositories
+```
+
+### 4. Search Repositories
+
+```bash
+local-git-rs search <pattern>
+```
+
+Search repositories by name pattern (case-insensitive).
+
+**Example**:
+```bash
+local-git-rs search my
+# Output:
+# Search Results for 'my'
+# ═══════════════════════════════════════════════════════════════════════════════
+#   my-project.git
+#   my-other-project.git
+#
+# Found: 2 repositories
+```
+
+### 5. View Repository Information
+
+```bash
+local-git-rs info <name>
+```
+
+Shows detailed information about a repository.
+
+**Example**:
+```bash
+local-git-rs info my-project
+# Output:
+# Repository: my-project.git
+# ═══════════════════════════════════════════════════════════════════════════════
+#   Path:     /home/user/.local-git-hub/my-project.git
+#   Size:     1.2 MB
+#   Commits:  42
+#   Modified: 2025-12-27 15:30:45
+```
+
+### 6. Delete Repository
+
+```bash
+# With confirmation prompt (default)
+local-git-rs delete <name>
+
+# Force delete without confirmation
+local-git-rs delete <name> --force
+```
+
+**Safety Features**:
+- Confirmation prompt with repository details
+- Shows size and commit count before deletion
+- Validates it's a valid Git repository before deletion
+- Use `--force` to skip confirmation (use with caution!)
+
+### 7. Add to Current Project
 
 #### Method A: Add Independent Remote
 
@@ -149,7 +247,7 @@ local-git-rs add-push-url my-project --remote-name github
 git push origin main
 ```
 
-### 4. Clone from Local Hub
+### 8. Clone from Local Hub
 
 ```bash
 git clone ~/.local-git-hub/<project-name>.git <destination>
@@ -164,19 +262,7 @@ git clone ~/.local-git-hub/my-project.git
 git clone ~/.local-git-hub/my-project.git my-project-copy
 ```
 
-### 5. List Repositories in Hub
-
-```bash
-local-git-rs list
-```
-
-### 6. Delete Repository
-
-```bash
-local-git-rs delete <name>
-```
-
-### 7. Other Remote Management Commands
+### 9. Remote Management
 
 ```bash
 # List remotes in current repository
@@ -190,7 +276,7 @@ local-git-rs remove-remote <remote-name> [--path <path>]
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Initialize Hub                       │
+│                    Initialize Hub                        │
 ├─────────────────────────────────────────────────────────┤
 │  local-git-rs init                                      │
 │  → Creates ~/.local-git-hub/ directory                  │
@@ -198,15 +284,16 @@ local-git-rs remove-remote <remote-name> [--path <path>]
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐
-│                  Create Backup Repository               │
+│                  Create Backup Repository                 │
 ├─────────────────────────────────────────────────────────┤
 │  local-git-rs create <name>                             │
 │  → Creates ~/.local-git-hub/<name>.git/                 │
 │  → Requires: init must be run first                     │
+│  → Validates: name, duplicates, reserved names          │
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐
-│            Add to Target Project (Two Methods)          │
+│            Add to Target Project (Two Methods)           │
 ├─────────────────────────────────────────────────────────┤
 │  Method A: add-remote                                   │
 │  local-git-rs add-remote <name>                         │
@@ -241,7 +328,10 @@ local-git-rs add-remote my-app
 # 4. Push to local backup
 git push local-hub main
 
-# 5. Later, clone from local hub
+# 5. View repository info
+local-git-rs info my-app
+
+# 6. Later, clone from local hub
 git clone ~/.local-git-hub/my-app.git my-app-restored
 ```
 
@@ -294,32 +384,58 @@ local-git-rs add-remote project2
 
 cd ~/projects/project3
 local-git-rs add-remote project3
+
+# List all repositories with details
+local-git-rs list --detailed
 ```
 
-### Scenario 5: Multiple Backup Remotes
+### Scenario 5: Search and Manage
 
 ```bash
-# Create backup repository
-local-git-rs create my-app
+# Search for projects
+local-git-rs search project
 
-# Add multiple backup remotes
-cd ~/projects/my-app
-local-git-rs add-remote my-app --remote-name backup1
-local-git-rs add-remote my-app --remote-name backup2
+# View detailed info
+local-git-rs info project1
 
-# Now you can push to multiple backups
-git push backup1 main
-git push backup2 main
+# Delete old backup (with confirmation)
+local-git-rs delete old-project
 ```
+
+## Safety Features
+
+### Input Validation
+
+- **Repository Name Validation**:
+  - No empty names
+  - No invalid characters (`/`, `\`, `:`, `*`, `?`, `"`, `<`, `>`, `|`)
+  - No reserved names (`.`, `..`)
+  - Maximum length 255 characters
+
+### Deletion Protection
+
+- **Confirmation Prompt**: Always asks before deletion
+- **Repository Details**: Shows size and commit count before deletion
+- **Valid Git Check**: Verifies it's a valid Git repository before deletion
+- **Force Option**: `--force` flag to skip confirmation (use carefully!)
+
+### Error Handling
+
+- Clear, colorful error messages
+- Helpful suggestions for common errors
+- Graceful handling of edge cases
 
 ## Parameter Reference
 
 | Parameter | Command | Description | Default | Required |
 |-----------|---------|-------------|---------|----------|
-| `<name>` | create, add-remote, add-push-url, delete | Repository name in hub | - | Yes |
+| `<name>` | create, add-remote, add-push-url, delete, info | Repository name in hub | - | Yes |
+| `<pattern>` | search | Search pattern (case-insensitive) | - | Yes |
 | `--remote-name` | add-remote, add-push-url | Remote name to create or modify | `local-hub` (add-remote)<br>`origin` (add-push-url) | No |
 | `--path` | add-remote, add-push-url, list-remotes, remove-remote | Target repository path | Current directory | No |
 | `--hub-path` | All | Hub root directory path | `~/.local-git-hub` | No |
+| `--detailed` | list | Show detailed information | false | No |
+| `--force` | delete | Skip confirmation prompt | false | No |
 
 ## Common Errors and Solutions
 
@@ -327,7 +443,8 @@ git push backup2 main
 
 ```bash
 $ local-git-rs add-remote my-project
-Error: Repository 'my-project' does not exist in hub
+✗ Repository 'my-project' does not exist in hub
+ℹ Use 'local-git-rs create my-project' to create it first
 ```
 
 **Solution**: Create the repository first
@@ -340,7 +457,7 @@ local-git-rs add-remote my-project
 
 ```bash
 $ local-git-rs add-remote my-project
-Error: Remote 'local-hub' already exists
+✗ Remote 'local-hub' already exists
 ```
 
 **Solution**: Remove existing remote or use different name
@@ -354,7 +471,7 @@ local-git-rs add-remote my-project --remote-name backup
 
 ```bash
 $ local-git-rs add-remote my-project
-Error: Failed to open repository from current directory
+✗ Failed to open repository from current directory
 ```
 
 **Solution**: Initialize Git repository or specify correct path
@@ -362,6 +479,18 @@ Error: Failed to open repository from current directory
 git init
 # OR
 local-git-rs add-remote my-project --path ~/projects/my-app
+```
+
+### Error: Invalid repository name
+
+```bash
+$ local-git-rs create my/project
+✗ Repository name cannot contain '/'
+```
+
+**Solution**: Use valid characters only
+```bash
+local-git-rs create my-project
 ```
 
 ## Architecture
@@ -378,8 +507,12 @@ Each `.git` directory is a standard Git bare repository that can be cloned and p
 ## Technical Implementation
 
 - **git2-rs**: Git operations using libgit2
-- **clap**: Modern CLI argument parsing
+- **clap**: Modern CLI argument parsing with derive features
 - **anyhow**: Elegant error handling
+- **colored**: Beautiful colored terminal output
+- **dialoguer**: Interactive confirmation prompts
+- **chrono**: Date and time handling
+- **humansize**: Human-readable file size formatting
 
 ## License
 
